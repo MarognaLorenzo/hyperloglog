@@ -2,6 +2,8 @@ mod hyperloglog;
 use hyperloglog::HyperLogLog;
 use std::{io};
 
+const REGISTRY_SIZE:usize = 128;
+
 fn main() {
     println!("HyperLogLog Word Counter");
     println!("Choose an option:");
@@ -15,7 +17,7 @@ fn main() {
             let choice = choice.trim();
             match choice {
                 "1" => {
-                    let mut structure = HyperLogLog::new(128);
+                    let mut structure = HyperLogLog::new(REGISTRY_SIZE);
                     user_feedback(&mut structure);
                 }
                 "2" => {
@@ -107,7 +109,7 @@ pub fn from_file(file: String) {
     use std::fs;
 use std::collections::HashSet;
     
-    let mut structure = HyperLogLog::new(32);
+    let mut structure = HyperLogLog::new(REGISTRY_SIZE);
     
     match fs::read_to_string(&file) {
         Ok(contents) => {

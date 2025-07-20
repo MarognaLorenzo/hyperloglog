@@ -18,9 +18,11 @@ impl HyperLogLog {
 
         // Initialize the hash function. P is a prime number close to the amount of 
         // letter in the alphabet (31). m is a really big prime number 
-        // Probelm to address: PolRolHF needs long strings to get away from 0.
+        // Probelm to address: PolRolHF needs long strings to increase.
         // For the way it is like now, one letter words will have very similar hashes
-        let hashing_function = PolRolHF::new(31, 9 + pow(10,9), 0);
+        // amt_register is the starting number (a sort of salt) because it ensure that
+        // there is a one after the first lnm bits. Otherwise, get_luckiness would o
+        let hashing_function = PolRolHF::new(31, 9 + pow(10,9), amt_register as u128);
 
         // compute log2(m) ones at the beginning to reuse it freely afterwards
         let lnm = (amt_register as f32).log2().floor() as usize;
@@ -40,6 +42,10 @@ impl HyperLogLog {
     // representation of the input number, starting from the 
     // less significant ones
     fn get_luckiness(mut number: u128)-> u8{
+        if number == 0 {
+            // prvent overflow 
+            return 128;
+        }
         let mut result: u8 = 0;
         while number % 2 == 0 {
             result += 1;
