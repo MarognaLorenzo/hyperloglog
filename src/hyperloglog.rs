@@ -15,7 +15,14 @@ impl HyperLogLog {
     pub fn new (amt_register: usize) -> HyperLogLog {
         let mut bests = vec![];
         bests.resize(amt_register, 0 as u8);
-        let hashing_function = PolRolHF::new(31, 9 + pow(10,9), random_range(100..pow(10,9)));
+
+        // Initialize the hash function. P is a prime number close to the amount of 
+        // letter in the alphabet (31). m is a really big prime number 
+        // Probelm to address: PolRolHF needs long strings to get away from 0.
+        // For the way it is like now, one letter words will have very similar hashes
+        let hashing_function = PolRolHF::new(31, 9 + pow(10,9), 0);
+
+        // compute log2(m) ones at the beginning to reuse it freely afterwards
         let lnm = (amt_register as f32).log2().floor() as usize;
         HyperLogLog {hashing_function, bests, lnm, m: amt_register}
     }
@@ -28,6 +35,10 @@ impl HyperLogLog {
             lnm: self.lnm
         }
     }
+
+    // This function counts the amount of zero bits in the binary
+    // representation of the input number, starting from the 
+    // less significant ones
     fn get_luckiness(mut number: u128)-> u8{
         let mut result: u8 = 0;
         while number % 2 == 0 {
@@ -45,50 +56,41 @@ impl HyperLogLog {
 
     pub fn add(&mut self, word: String){
         let hashed_value = self.hashing_function.hash(&word);
+
+        // The registry number is given by the first lnm bits of the hash number.
         let registry = hashed_value & (pow(2, self.lnm) - 1);
         
         // println!("m: {}, lnm: {}", self.m, self.lnm);
         // println!("Hash: {:b}. \n regi: {:b}, {}", hashed_value, registry, registry);
         // println!("shifted: {:b}", hashed_value >> self.lnm);
         let luckiness = Self::get_luckiness(hashed_value >> self.lnm);
-        if luckiness >= 14 {
-            println!("---------------------");
-            println!("WORD: {}", word);
-            println!("Hash: {:b}", hashed_value);
-            println!("Luckiness: {}", luckiness);
-            println!("Registry: {}", registry);
-            println!("Content: {}", self.bests[registry as usize]);
-        }
-        self.bests[registry as usize] = self.bests[registry as usize].max(luckiness);
+
+        // Update registry with improved value
+        self.bests[registry as usize] = self.bests[registry as usize].max(luckiness + 1);
     }
 
     // Computes harmonic mean on the vector containing the best result.
     fn harmonic_mean (bests: &Vec<u8>) -> f64{
         let reciprocal_total:f64 = bests.iter().map(|&best| {
-            let exponent: i32 = - (best as i32 +1);
-            2f64.powi(exponent)
+            2f64.powi(best as i32 * -1)
         }).sum();
-        let harmonic_average: f64 = bests.len() as f64 / reciprocal_total;
-        return harmonic_average;
+        return reciprocal_total.recip();
     }
 
-    pub fn count(&self)-> f64 {
+    pub fn count(&self)-> usize {
         let float_m: f64 = self.m as f64;
         let amt_empty_registers = self.bests.iter().filter(|&reg| *reg == 0).count();
         if amt_empty_registers > 0 {
             println!("Returning Linear Counting Estimation");
             println!("Empty registers: {}", amt_empty_registers);
-            return float_m * (float_m / amt_empty_registers as f64).log2();
+            return (float_m * (float_m / amt_empty_registers as f64).log2().floor()) as usize;
         } else {
             println!("Returning HyperLogLog Estimation");
             let z = Self::harmonic_mean(&self.bests);
             let alpha = (0.7213)/ (1 as f64 + (1.079 / float_m));
             println!("alpha: {}, z: {} float_m: {}", alpha, z, float_m);
 
-            for reg in &self.bests {
-                println!("Reg: {}", reg);
-            }
-            return alpha * z * float_m * float_m;
+            return (alpha * z * float_m * float_m).floor() as usize;
         }
     }
 }
