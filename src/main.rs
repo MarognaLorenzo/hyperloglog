@@ -136,7 +136,9 @@ use std::collections::HashSet;
             }
             
             println!("Finished processing file.");
-            println!("Expected unique words: {}", structure.get_single_words());
+            println!("Expected unique words aritmetic: {}", structure.get_single_words());
+            structure.set_harmonic();
+            println!("Expected unique words harmonic: {}", structure.get_single_words());
             println!("Unique words: {}", set.len());
         }
         Err(error) => {
