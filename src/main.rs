@@ -15,7 +15,7 @@ fn main() {
             let choice = choice.trim();
             match choice {
                 "1" => {
-                    let mut structure = HyperLogLog::new("interactive mode".to_string());
+                    let mut structure = HyperLogLog::new(100);
                     user_feedback(&mut structure);
                 }
                 "2" => {
@@ -107,7 +107,7 @@ pub fn from_file(file: String) {
     use std::fs;
 use std::collections::HashSet;
     
-    let mut structure = HyperLogLog::new("file processing".to_string());
+    let mut structure = HyperLogLog::new(100);
     
     match fs::read_to_string(&file) {
         Ok(contents) => {
