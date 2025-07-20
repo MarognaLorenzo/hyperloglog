@@ -1,5 +1,5 @@
 pub trait Hashing {
-    fn hash(&self, input: String) -> u128;
+    fn hash(&self, input: &String) -> u128;
 }
 pub struct PolRolHF{
     p: u128,
@@ -14,7 +14,7 @@ impl PolRolHF {
 }
 
 impl Hashing for PolRolHF {
-    fn hash(&self, input: String) -> u128 {
+    fn hash(&self, input: &String) -> u128 {
         let word_as_bytes = input.as_bytes();
         let mut res: u128 = self.salt;
 
@@ -22,10 +22,8 @@ impl Hashing for PolRolHF {
 
         for i in 0..input.len() {
             let char_val: &u8 = word_as_bytes.get(i).unwrap();
-            res += *char_val as u128 * powering;
-            powering *= self.p;
-            powering %= self.m;
-            res %= self.m;
+            res = (res + *char_val as u128 * powering) % self.m;
+            powering = (powering * self.p) % self.m;
         }
         return res;
     }

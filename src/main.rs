@@ -15,7 +15,7 @@ fn main() {
             let choice = choice.trim();
             match choice {
                 "1" => {
-                    let mut structure = HyperLogLog::new(100);
+                    let mut structure = HyperLogLog::new(128);
                     user_feedback(&mut structure);
                 }
                 "2" => {
@@ -107,7 +107,7 @@ pub fn from_file(file: String) {
     use std::fs;
 use std::collections::HashSet;
     
-    let mut structure = HyperLogLog::new(100);
+    let mut structure = HyperLogLog::new(32);
     
     match fs::read_to_string(&file) {
         Ok(contents) => {
@@ -131,14 +131,12 @@ use std::collections::HashSet;
                 
                 if !cleaned_word.is_empty() {
                     set.insert(cleaned_word.clone());
-                    structure.receive(cleaned_word);
+                    structure.add(cleaned_word);
                 }
             }
             
             println!("Finished processing file.");
-            println!("Expected unique words aritmetic: {}", structure.get_single_words());
-            structure.set_harmonic();
-            println!("Expected unique words harmonic: {}", structure.get_single_words());
+            println!("Expected unique words harmonic: {}", structure.count());
             println!("Unique words: {}", set.len());
         }
         Err(error) => {
@@ -146,6 +144,7 @@ use std::collections::HashSet;
         }
     }
 }
+
 pub fn user_feedback(structure: &mut HyperLogLog) {
     println!("HyperLogLog initialized! Enter strings to process (type 'quit' to exit):");
     
@@ -163,7 +162,7 @@ pub fn user_feedback(structure: &mut HyperLogLog) {
                 }
                 
                 if !input.is_empty() {
-                    structure.receive(input);
+                    structure.add(input);
                 } else {
                     println!("Please enter a non-empty string.");
                 }
@@ -174,5 +173,5 @@ pub fn user_feedback(structure: &mut HyperLogLog) {
         }
     }
 
-    println!("Expected unique words: {}", structure.get_single_words());
+    println!("Expected unique words: {}", structure.count());
 }
